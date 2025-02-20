@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ESNext", "DOM"], // Add DOM for HTMLElement, MessagePort, etc.
+    "allowJs": false,
+    "types": ["node"],
+    "module": "ESNext",
+    "moduleResolution": "bundler", // Better for Vite/Rollup compatibility
+    "allowSyntheticDefaultImports": true,
+    "noEmit": false,
+    "outDir": "dist-electron",
+    "sourceMap": true
+  },
+  "include": ["src/main.ts", "vite.config.ts"]
+}
