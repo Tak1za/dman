@@ -14,9 +14,15 @@ type Database struct {
 	Encoding string `json:"encoding"`
 }
 
+// Schema represents a PostgreSQL schema entry
+type Schema struct {
+	Name string `json:"name"`
+}
+
 // DB interface for mocking in tests
 type DB interface {
 	ListDatabases(ctx context.Context) ([]Database, error)
+	ListSchemas(ctx context.Context) ([]Schema, error)
 }
 
 // PgxDB implements DB using pgx
@@ -47,6 +53,7 @@ func (db *PgxDB) ListDatabases(ctx context.Context) ([]Database, error) {
             pg_encoding_to_char(d.encoding)
         FROM pg_database d
         JOIN pg_roles r ON d.datdba = r.oid
+				WHERE d.datname NOT IN ('template0','template1')
     `
 	rows, err := db.conn.Query(ctx, query)
 	if err != nil {
@@ -68,4 +75,34 @@ func (db *PgxDB) ListDatabases(ctx context.Context) ([]Database, error) {
 	}
 
 	return databases, nil
+}
+
+// ListDatabases queries the PostgreSQL server for all schemas
+func (db *PgxDB) ListSchemas(ctx context.Context) ([]Schema, error) {
+	query := `
+        SELECT nspname 
+				FROM pg_catalog.pg_namespace 
+				WHERE nspname 
+				NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+    `
+	rows, err := db.conn.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query schemas: %v", err)
+	}
+	defer rows.Close()
+
+	var schemas []Schema
+	for rows.Next() {
+		var db Schema
+		if err := rows.Scan(&db.Name); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %v", err)
+		}
+		schemas = append(schemas, db)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	return schemas, nil
 }

@@ -9,6 +9,7 @@ import { NavDatabases } from "./NavDatabases";
 import { NavUser } from "./NavUser";
 import { ServerSwitcher } from "./ServerSwitcher";
 import { useEffect, useState } from "react";
+import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 export interface Database {
   name: string;
@@ -70,12 +71,11 @@ export function AppSidebar({ servers, onAddServer }: SidebarProps) {
         />
       </SidebarHeader>
       <SidebarContent>
-        <NavDatabases databases={databases} />
+        <NavDatabases databases={databases} activeServer={activeServer} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }
