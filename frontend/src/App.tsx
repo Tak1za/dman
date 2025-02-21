@@ -18,13 +18,28 @@ import { Separator } from "@/components/ui/separator";
 
 function App() {
   const [servers, setServers] = useState<Server[]>(() => {
-    const saved = localStorage.getItem("connections");
-    return saved ? JSON.parse(saved) : [];
+    const saved = localStorage.getItem("servers");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: "1",
+            host: "localhost",
+            database: "postgres",
+            name: "PostgreSQL",
+            port: "5432",
+            user: "postgres",
+            password: "password",
+          },
+        ];
   });
-  const [selectedServer, setSelectedServer] = useState<Server | null>(null);
+  const [selectedServer, setSelectedServer] = useState<Server>(servers[0]);
+  const [selectedDatabase, setSelectedDatabase] = useState<Database | null>(
+    null
+  );
 
   useEffect(() => {
-    localStorage.setItem("connections", JSON.stringify(servers));
+    localStorage.setItem("servers", JSON.stringify(servers));
   }, [servers]);
 
   const handleAddServer = (conn: Server) => {
@@ -38,19 +53,11 @@ function App() {
           <AppSidebar
             servers={servers}
             selectedServer={selectedServer}
-            onSelectServer={setSelectedServer}
+            setSelectedServer={setSelectedServer}
             onAddServer={handleAddServer}
+            selectedDatabase={selectedDatabase}
+            onSelectDatabase={setSelectedDatabase}
           />
-          {/* <AppSidebar
-            connections={connections}
-            selectedConnection={selectedConnection}
-            databases={databases}
-            onSelectConnection={setSelectedConnection}
-            onAddConnection={handleAddConnection}
-          />
-          <div className="flex-1 p-2">
-            <SidebarTrigger />
-          </div> */}
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
               <div className="flex items-center gap-2 px-4">
@@ -60,13 +67,19 @@ function App() {
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
                       <BreadcrumbLink href="#">
-                        Building Your Application
+                        {selectedServer.name}
                       </BreadcrumbLink>
                     </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                    </BreadcrumbItem>
+                    {selectedDatabase ? (
+                      <>
+                        <BreadcrumbSeparator className="hidden md:block" />
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>
+                            {selectedDatabase.name}
+                          </BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </>
+                    ) : undefined}
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>

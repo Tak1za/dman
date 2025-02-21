@@ -40,10 +40,17 @@ interface Schema {
 
 interface NavDatabasesProps {
   readonly databases: Database[];
-  readonly activeServer: Server;
+  readonly selectedServer: Server;
+  readonly selectedDatabase: Database | null;
+  readonly onSelectDatabase: (db: Database) => void;
 }
 
-export function NavDatabases({ databases, activeServer }: NavDatabasesProps) {
+export function NavDatabases({
+  databases,
+  selectedServer,
+  selectedDatabase,
+  onSelectDatabase,
+}: NavDatabasesProps) {
   const [schemas, setSchemas] = useState<
     {
       database: string;
@@ -52,7 +59,7 @@ export function NavDatabases({ databases, activeServer }: NavDatabasesProps) {
   >([]);
   const handleExpandDatabase = (isOpen: boolean, database: string) => {
     if (isOpen) {
-      const connStr = `postgres://${activeServer.user}:${activeServer.password}@${activeServer.host}:${activeServer.port}/${database}`;
+      const connStr = `postgres://${selectedServer.user}:${selectedServer.password}@${selectedServer.host}:${selectedServer.port}/${database}`;
       fetch("http://localhost:8080/schemas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,8 +103,14 @@ export function NavDatabases({ databases, activeServer }: NavDatabasesProps) {
           >
             <SidebarMenuItem>
               <>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={database.name}>
+                <CollapsibleTrigger
+                  asChild
+                  onClick={() => onSelectDatabase(database)}
+                >
+                  <SidebarMenuButton
+                    tooltip={database.name}
+                    isActive={selectedDatabase?.name === database.name}
+                  >
                     <DatabaseIcon />
                     <span>{database.name}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />

@@ -21,15 +21,15 @@ import { ServerForm } from "./ServerForm";
 
 interface ServerSwitcherProps {
   readonly servers: Server[];
-  readonly activeServer: Server;
-  readonly setActiveServer: (server: Server) => void;
+  readonly selectedServer: Server;
+  readonly setSelectedServer: (server: Server) => void;
   readonly onAddServer: (conn: Server) => void;
 }
 
 export function ServerSwitcher({
   servers,
-  activeServer,
-  setActiveServer,
+  selectedServer,
+  setSelectedServer,
   onAddServer,
 }: ServerSwitcherProps) {
   const { isMobile } = useSidebar();
@@ -49,7 +49,7 @@ export function ServerSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeServer.name}
+                  {selectedServer.name}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -67,7 +67,7 @@ export function ServerSwitcher({
             {servers.map((server, index) => (
               <DropdownMenuItem
                 key={server.id}
-                onClick={() => setActiveServer(server)}
+                onClick={() => setSelectedServer(server)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-sm border">

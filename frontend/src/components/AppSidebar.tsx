@@ -3,13 +3,11 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavDatabases } from "./NavDatabases";
 import { NavUser } from "./NavUser";
 import { ServerSwitcher } from "./ServerSwitcher";
 import { useEffect, useState } from "react";
-import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 export interface Database {
   name: string;
@@ -27,11 +25,13 @@ export interface Server {
   database: string;
 }
 
-interface SidebarProps {
+interface AppSidebarProps {
   servers: Server[];
-  selectedServer: Server | null;
-  onSelectServer: (conn: Server) => void;
+  selectedServer: Server;
+  setSelectedServer: (conn: Server) => void;
   onAddServer: (conn: Server) => void;
+  selectedDatabase: Database | null;
+  onSelectDatabase: (db: Database) => void;
 }
 
 const data = {
@@ -42,13 +42,19 @@ const data = {
   },
 };
 
-export function AppSidebar({ servers, onAddServer }: SidebarProps) {
-  const [activeServer, setActiveServer] = useState(servers[0]);
+export function AppSidebar({
+  servers,
+  selectedServer,
+  setSelectedServer,
+  onAddServer,
+  selectedDatabase,
+  onSelectDatabase,
+}: AppSidebarProps) {
   const [databases, setDatabases] = useState<Database[]>([]);
 
   useEffect(() => {
-    if (activeServer) {
-      const connStr = `postgres://${activeServer.user}:${activeServer.password}@${activeServer.host}:${activeServer.port}/${activeServer.database}`;
+    if (selectedServer) {
+      const connStr = `postgres://${selectedServer.user}:${selectedServer.password}@${selectedServer.host}:${selectedServer.port}/${selectedServer.database}`;
       fetch("http://localhost:8080/databases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,7 +64,7 @@ export function AppSidebar({ servers, onAddServer }: SidebarProps) {
         .then((data) => setDatabases(data))
         .catch((err) => console.error("Failed to fetch databases:", err));
     }
-  }, [activeServer]);
+  }, [selectedServer]);
 
   return (
     <Sidebar collapsible="icon">
@@ -66,12 +72,17 @@ export function AppSidebar({ servers, onAddServer }: SidebarProps) {
         <ServerSwitcher
           servers={servers}
           onAddServer={onAddServer}
-          activeServer={activeServer}
-          setActiveServer={setActiveServer}
+          selectedServer={selectedServer}
+          setSelectedServer={setSelectedServer}
         />
       </SidebarHeader>
       <SidebarContent>
-        <NavDatabases databases={databases} activeServer={activeServer} />
+        <NavDatabases
+          databases={databases}
+          selectedServer={selectedServer}
+          selectedDatabase={selectedDatabase}
+          onSelectDatabase={onSelectDatabase}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
