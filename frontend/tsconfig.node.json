@@ -1,15 +1,24 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "lib": ["ESNext", "DOM"], // Add DOM for HTMLElement, MessagePort, etc.
-    "allowJs": false,
-    "types": ["node"],
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
     "module": "ESNext",
-    "moduleResolution": "bundler", // Better for Vite/Rollup compatibility
-    "allowSyntheticDefaultImports": true,
-    "noEmit": false,
-    "outDir": "dist-electron",
-    "sourceMap": true
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
   },
   "include": ["src/main.ts", "vite.config.ts"]
 }

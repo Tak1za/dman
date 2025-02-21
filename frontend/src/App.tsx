@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DatabaseList } from "./components/DatabaseList";
+import { DatabaseList } from "@/components/DatabaseList";
 
 interface Database {
   name: string;
