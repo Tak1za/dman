@@ -15,6 +15,15 @@ import {
   BreadcrumbPage,
 } from "./components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { XIcon } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
+
+interface Tab {
+  id: string;
+  title: string;
+  content: string;
+}
 
 function App() {
   const [servers, setServers] = useState<Server[]>(() => {
@@ -37,6 +46,53 @@ function App() {
   const [selectedDatabase, setSelectedDatabase] = useState<Database | null>(
     null
   );
+  const [tabs, setTabs] = useState<Tab[]>([
+    { id: uuidv4(), title: "New Tab 1", content: "" },
+  ]);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+
+  const openTab = (tabId: string) => {
+    const existingTab = tabs.find((tab) => tab.id === tabId);
+    if (!existingTab) {
+      const tabId = uuidv4();
+      setTabs((prev) => [
+        ...prev,
+        {
+          id: tabId,
+          title: "New Tab",
+          content: `Content for server ${selectedServer} and database ${selectedDatabase}`,
+        },
+      ]);
+      setActiveTab(tabId);
+    } else {
+      setActiveTab(tabId);
+    }
+  };
+
+  const closeTab = (tabId: string) => {
+    setTabs((prev) => {
+      const newTabs = prev.filter((tab) => tab.id !== tabId);
+      if (activeTab === tabId) {
+        setActiveTab(
+          newTabs.length > 0 ? newTabs[newTabs.length - 1].id : null
+        );
+      }
+      return newTabs;
+    });
+  };
+
+  const addNewTab = () => {
+    const newTabId = uuidv4();
+    setTabs((prev) => [
+      ...prev,
+      {
+        id: newTabId,
+        title: `New Tab ${tabs.length + 1}`,
+        content: `Content for server ${selectedServer} and database ${selectedDatabase}`,
+      },
+    ]);
+    setActiveTab(newTabId);
+  };
 
   useEffect(() => {
     localStorage.setItem("servers", JSON.stringify(servers));
@@ -48,7 +104,7 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen overflow-hidden">
         <SidebarProvider>
           <AppSidebar
             servers={servers}
@@ -57,6 +113,7 @@ function App() {
             onAddServer={handleAddServer}
             selectedDatabase={selectedDatabase}
             onSelectDatabase={setSelectedDatabase}
+            addNewTab={addNewTab}
           />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -84,13 +141,37 @@ function App() {
                 </Breadcrumb>
               </div>
             </header>
-            <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-              <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div className="aspect-video rounded-xl bg-muted/50" />
-                <div className="aspect-video rounded-xl bg-muted/50" />
-                <div className="aspect-video rounded-xl bg-muted/50" />
-              </div>
-              <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+            <div className="flex-1 p-4 pt-0 overflow-hidden">
+              <div className="text-xl mb-2">Query Pad</div>
+              {tabs.length > 0 ? (
+                <Tabs
+                  value={activeTab || tabs[0].id}
+                  onValueChange={setActiveTab}
+                >
+                  <TabsList>
+                    {tabs.map((tab) => (
+                      <TabsTrigger key={tab.id} value={tab.id}>
+                        <div className="flex flex-row justify-between gap-4 items-center">
+                          {tab.title}
+                          <XIcon
+                            className="cursor-pointer size-4"
+                            onClick={() => tabs.length > 1 && closeTab(tab.id)}
+                          />
+                        </div>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  {tabs.map((tab) => (
+                    <TabsContent key={tab.id} value={tab.id}>
+                      <div className="mt-4">{tab.content}</div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              ) : (
+                <div className="text-gray-400">
+                  No tabs open. Select a connection or add a new tab.
+                </div>
+              )}
             </div>
           </SidebarInset>
         </SidebarProvider>

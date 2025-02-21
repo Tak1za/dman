@@ -32,6 +32,7 @@ interface AppSidebarProps {
   onAddServer: (conn: Server) => void;
   selectedDatabase: Database | null;
   onSelectDatabase: (db: Database) => void;
+  addNewTab: () => void;
 }
 
 const data = {
@@ -49,6 +50,7 @@ export function AppSidebar({
   onAddServer,
   selectedDatabase,
   onSelectDatabase,
+  addNewTab,
 }: AppSidebarProps) {
   const [databases, setDatabases] = useState<Database[]>([]);
 
@@ -61,7 +63,10 @@ export function AppSidebar({
         body: JSON.stringify({ connectionString: connStr }),
       })
         .then((res) => res.json())
-        .then((data) => setDatabases(data))
+        .then((data) => {
+          setDatabases(data);
+          onSelectDatabase(data[0]);
+        })
         .catch((err) => console.error("Failed to fetch databases:", err));
     }
   }, [selectedServer]);
@@ -82,6 +87,7 @@ export function AppSidebar({
           selectedServer={selectedServer}
           selectedDatabase={selectedDatabase}
           onSelectDatabase={onSelectDatabase}
+          addNewTab={addNewTab}
         />
       </SidebarContent>
       <SidebarFooter>

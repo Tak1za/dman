@@ -43,6 +43,7 @@ interface NavDatabasesProps {
   readonly selectedServer: Server;
   readonly selectedDatabase: Database | null;
   readonly onSelectDatabase: (db: Database) => void;
+  readonly addNewTab: () => void;
 }
 
 export function NavDatabases({
@@ -50,6 +51,7 @@ export function NavDatabases({
   selectedServer,
   selectedDatabase,
   onSelectDatabase,
+  addNewTab,
 }: NavDatabasesProps) {
   const [schemas, setSchemas] = useState<
     {
@@ -91,7 +93,7 @@ export function NavDatabases({
     <SidebarGroup>
       <SidebarGroupLabel>Databases</SidebarGroupLabel>
       <SidebarMenu>
-        {databases.map((database) => (
+        {databases.map((database, i) => (
           <Collapsible
             key={database.name}
             asChild
@@ -160,7 +162,7 @@ export function NavDatabases({
                     </SidebarMenuAction>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="right" align="start">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={addNewTab}>
                       <span>Query Pad</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
