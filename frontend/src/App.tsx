@@ -15,11 +15,10 @@ import {
   BreadcrumbPage,
 } from "./components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { XIcon } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { QueryPad } from "./components/QueryPad";
 
-interface Tab {
+export interface Tab {
   id: string;
   title: string;
   content: string;
@@ -50,24 +49,7 @@ function App() {
     { id: uuidv4(), title: "New Tab 1", content: "" },
   ]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
-
-  const openTab = (tabId: string) => {
-    const existingTab = tabs.find((tab) => tab.id === tabId);
-    if (!existingTab) {
-      const tabId = uuidv4();
-      setTabs((prev) => [
-        ...prev,
-        {
-          id: tabId,
-          title: "New Tab",
-          content: `Content for server ${selectedServer} and database ${selectedDatabase}`,
-        },
-      ]);
-      setActiveTab(tabId);
-    } else {
-      setActiveTab(tabId);
-    }
-  };
+  const [showQueryPad, setShowQueryPad] = useState(false);
 
   const closeTab = (tabId: string) => {
     setTabs((prev) => {
@@ -82,16 +64,26 @@ function App() {
   };
 
   const addNewTab = () => {
-    const newTabId = uuidv4();
-    setTabs((prev) => [
-      ...prev,
-      {
-        id: newTabId,
-        title: `New Tab ${tabs.length + 1}`,
-        content: `Content for server ${selectedServer} and database ${selectedDatabase}`,
-      },
-    ]);
-    setActiveTab(newTabId);
+    if (!showQueryPad) {
+      setShowQueryPad(true);
+    } else {
+      const newTabId = uuidv4();
+      setTabs((prev) => [
+        ...prev,
+        {
+          id: newTabId,
+          title: `New Tab ${tabs.length + 1}`,
+          content: "",
+        },
+      ]);
+      setActiveTab(newTabId);
+    }
+  };
+
+  const updateTabContent = (tabId: string, sqlCode: string) => {
+    setTabs((prev) =>
+      prev.map((tab) => (tab.id === tabId ? { ...tab, content: sqlCode } : tab))
+    );
   };
 
   useEffect(() => {
@@ -115,7 +107,7 @@ function App() {
             onSelectDatabase={setSelectedDatabase}
             addNewTab={addNewTab}
           />
-          <SidebarInset>
+          <SidebarInset className="flex-1 flex flex-col overflow-hidden">
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
               <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
@@ -141,38 +133,18 @@ function App() {
                 </Breadcrumb>
               </div>
             </header>
-            <div className="flex-1 p-4 pt-0 overflow-hidden">
-              <div className="text-xl mb-2">Query Pad</div>
-              {tabs.length > 0 ? (
-                <Tabs
-                  value={activeTab || tabs[0].id}
-                  onValueChange={setActiveTab}
-                >
-                  <TabsList>
-                    {tabs.map((tab) => (
-                      <TabsTrigger key={tab.id} value={tab.id}>
-                        <div className="flex flex-row justify-between gap-4 items-center">
-                          {tab.title}
-                          <XIcon
-                            className="cursor-pointer size-4"
-                            onClick={() => tabs.length > 1 && closeTab(tab.id)}
-                          />
-                        </div>
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  {tabs.map((tab) => (
-                    <TabsContent key={tab.id} value={tab.id}>
-                      <div className="mt-4">{tab.content}</div>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              ) : (
-                <div className="text-gray-400">
-                  No tabs open. Select a connection or add a new tab.
-                </div>
-              )}
-            </div>
+            {showQueryPad && (
+              <QueryPad
+                selectedDatabase={selectedDatabase}
+                selectedServer={selectedServer}
+                onCloseTab={closeTab}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                tabs={tabs}
+                onNewTab={addNewTab}
+                updateTabContent={updateTabContent}
+              />
+            )}
           </SidebarInset>
         </SidebarProvider>
       </div>

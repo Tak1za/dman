@@ -5,6 +5,7 @@
 body {
   font-family: "Inter", sans-serif;
   margin: 0;
+  overflow: hidden;
 }
 
 @layer base {
@@ -86,5 +87,23 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .scrollbar::-webkit-scrollbar {
+    width: 7px;
+    height: 20px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: hsl(var(--secondary));
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--secondary-foreground));
+    border-radius: 100vh;
+    border: 3px solid #f6f7ed;
   }
 }

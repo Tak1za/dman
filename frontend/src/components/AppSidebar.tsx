@@ -72,7 +72,7 @@ export function AppSidebar({
   }, [selectedServer]);
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
         <ServerSwitcher
           servers={servers}
