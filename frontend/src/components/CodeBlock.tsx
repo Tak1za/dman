@@ -1,6 +1,6 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { darcula } from "@uiw/codemirror-theme-darcula";
 import { cn } from "@/lib/utils";
 
 interface CodeBlockProps {
@@ -15,7 +15,7 @@ export function CodeBlock({ value, onChange, className }: CodeBlockProps) {
       value={value}
       onChange={onChange}
       extensions={[sql()]}
-      theme={oneDark}
+      theme={darcula}
       className={cn("h-[calc(100vh-200px)]", "text-lg", className)}
       height="100%"
       basicSetup={{

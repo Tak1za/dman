@@ -118,7 +118,7 @@ body {
 }
 
 .cm-gutters {
-  border-radius: 10px;
+  border-radius-left: 10px;
 }
 
 .cm-scroller::-webkit-scrollbar {
