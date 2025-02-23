@@ -64,6 +64,8 @@ export function QueryPad({
               <CodeBlock
                 value={tab.content}
                 onChange={(sqlCode) => updateTabContent(tab.id, sqlCode)}
+                server={selectedServer}
+                database={selectedDatabase}
               />
             </TabsContent>
           ))}

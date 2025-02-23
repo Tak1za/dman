@@ -23,6 +23,7 @@ type Schema struct {
 type DB interface {
 	ListDatabases(ctx context.Context) ([]Database, error)
 	ListSchemas(ctx context.Context) ([]Schema, error)
+	ExecuteQuery(ctx context.Context, query string) ([]string, [][]interface{}, string)
 }
 
 // PgxDB implements DB using pgx
@@ -105,4 +106,29 @@ func (db *PgxDB) ListSchemas(ctx context.Context) ([]Schema, error) {
 	}
 
 	return schemas, nil
+}
+
+func (db *PgxDB) ExecuteQuery(ctx context.Context, query string) ([]string, [][]interface{}, string) {
+	rows, err := db.conn.Query(ctx, query)
+	if err != nil {
+		return nil, nil, err.Error()
+	}
+	defer rows.Close()
+
+	columns := rows.FieldDescriptions()
+	columnNames := make([]string, len(columns))
+	for i, col := range columns {
+		columnNames[i] = string(col.Name)
+	}
+
+	var resultRows [][]interface{}
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			return nil, nil, err.Error()
+		}
+		resultRows = append(resultRows, values)
+	}
+
+	return columnNames, resultRows, ""
 }

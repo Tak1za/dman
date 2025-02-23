@@ -109,21 +109,20 @@ body {
 }
 
 .cm-theme {
-  border-radius: 10px;
-}
-
-.cm-editor {
-  border-radius: 10px;
   padding: 1px;
 }
 
+.cm-editor {
+  padding: 1px;
+  height: 100%;
+}
+
 .cm-gutters {
-  border-radius-left: 10px;
 }
 
 .cm-scroller::-webkit-scrollbar {
   width: 7px;
-  height: 20px;
+  height: 7px;
 }
 
 .cm-scroller::-webkit-scrollbar-track {

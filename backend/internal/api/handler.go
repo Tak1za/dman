@@ -13,6 +13,17 @@ type Handler struct {
 	db db.DB
 }
 
+type QueryRequest struct {
+	ConnectionString string `json:"connectionString"`
+	Query            string `json:"query"`
+}
+
+type QueryResult struct {
+	Columns []string        `json:"columns"`
+	Rows    [][]interface{} `json:"rows"`
+	Error   string          `json:"error,omitempty"`
+}
+
 // Handler for CORS
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
@@ -108,5 +119,40 @@ func (h *Handler) ListSchemasHandler() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(schemas)
+	}
+}
+
+func (h *Handler) ExecuteQueryHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req QueryRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		var res QueryResult
+
+		ctx := context.Background()
+		columns, rows, err := h.db.ExecuteQuery(ctx, req.Query)
+		if err != "" {
+			res.Error = err
+		} else {
+			res.Columns = columns
+			res.Rows = rows
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(res)
 	}
 }
