@@ -15,13 +15,13 @@ import {
   BreadcrumbPage,
 } from "./components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { v4 as uuidv4 } from "uuid";
 import { QueryPad } from "./components/QueryPad";
 
 export interface Tab {
   id: string;
   title: string;
   content: string;
+  filePath: string;
 }
 
 function App() {
@@ -45,14 +45,85 @@ function App() {
   const [selectedDatabase, setSelectedDatabase] = useState<Database | null>(
     null
   );
-  const [tabs, setTabs] = useState<Tab[]>([
-    { id: uuidv4(), title: "New Tab 1", content: "" },
-  ]);
+  const [tabs, setTabs] = useState<Tab[]>(() => {
+    // Initial load will be handled in useEffect due to async IPC
+    return [];
+  });
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [showQueryPad, setShowQueryPad] = useState(false);
+  const [tempDir, setTempDir] = useState<string>("");
+  const [tabsIndexFile, setTabsIndexFile] = useState<string>("");
+
+  useEffect(() => {
+    localStorage.setItem("servers", JSON.stringify(servers));
+  }, [servers]);
+
+  // Fetch temp directory and load tabs on mount
+  useEffect(() => {
+    window.electronAPI.getTempDir().then(async ({ tempDir, tabsIndexFile }) => {
+      setTempDir(tempDir);
+      setTabsIndexFile(tabsIndexFile);
+      try {
+        const indexData = await window.electronAPI.readFile(tabsIndexFile);
+        const savedTabs: Tab[] = JSON.parse(indexData);
+        const allTabsData = await Promise.all(
+          savedTabs.map((tab) => window.electronAPI.readFile(tab.filePath))
+        );
+        const loadedTabs = savedTabs.map((tab, i) => {
+          return {
+            ...tab,
+            content: allTabsData[i],
+          };
+        });
+        setTabs(loadedTabs);
+        if (loadedTabs.length > 0) {
+          setShowQueryPad(true);
+          setActiveTab(loadedTabs[loadedTabs.length - 1].id);
+        }
+      } catch (err) {
+        setTabs([]);
+      }
+    });
+  }, []);
+
+  // Save tabs to temp files and index when tempDir is set
+  useEffect(() => {
+    const doStuff = async () => {
+      if (!tempDir || !tabsIndexFile) return; // Wait for tempDir to be set
+      const allFilePaths = await Promise.all(
+        tabs.map((tab) =>
+          window.electronAPI.writeToFile(tab.filePath, tab.id, tab.content)
+        )
+      );
+      const tabsWithPaths = tabs.map((tab, i) => {
+        return {
+          ...tab,
+          filePath: allFilePaths[i],
+        };
+      });
+      await window.electronAPI.writeToFile(
+        tabsIndexFile,
+        "",
+        JSON.stringify(tabsWithPaths)
+      );
+      if (tabs.length > 0 && !activeTab) {
+        setActiveTab(tabs[0].id);
+      }
+    };
+
+    doStuff();
+  }, [tabs, activeTab, tempDir, tabsIndexFile]);
 
   const closeTab = (tabId: string) => {
     setTabs((prev) => {
+      const tabToClose = prev.find((tab) => tab.id === tabId);
+      if (tabToClose && tabToClose.filePath) {
+        try {
+          window.electronAPI.unlinkSync(tabToClose.filePath); // Delete temp file
+        } catch (err) {
+          console.error("Failed to delete temp file:", err);
+        }
+      }
       const newTabs = prev.filter((tab) => tab.id !== tabId);
       if (activeTab === tabId) {
         setActiveTab(
@@ -64,20 +135,16 @@ function App() {
   };
 
   const addNewTab = (server: Server, database: Database | null) => {
-    if (!showQueryPad) {
-      setShowQueryPad(true);
-    } else {
-      const newTabId = uuidv4();
-      setTabs((prev) => [
-        ...prev,
-        {
-          id: newTabId,
-          title: `New Tab ${tabs.length + 1}`,
-          content: "",
-        },
-      ]);
-      setActiveTab(newTabId);
-    }
+    const newTabId = `tab-${Date.now()}`;
+    const newTab = {
+      id: newTabId,
+      title: "New Tab",
+      content: "",
+      filePath: "",
+    };
+    setShowQueryPad(true);
+    setTabs((prev) => [...prev, newTab]);
+    setActiveTab(newTabId);
     setSelectedServer(server);
     setSelectedDatabase(database);
   };
@@ -88,9 +155,18 @@ function App() {
     );
   };
 
-  useEffect(() => {
-    localStorage.setItem("servers", JSON.stringify(servers));
-  }, [servers]);
+  const handleSaveAsFile = (tabId: string, sqlCode: string) => {
+    const currentTab = tabs.find((t) => t.id === tabId)!;
+    const blob = new Blob([sqlCode], { type: "text/sql" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${currentTab.title}.sql`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   const handleAddServer = (conn: Server) => {
     setServers((prev) => [...prev, conn]);
@@ -145,6 +221,7 @@ function App() {
                 tabs={tabs}
                 onNewTab={addNewTab}
                 updateTabContent={updateTabContent}
+                onSaveAsFile={handleSaveAsFile}
               />
             )}
           </SidebarInset>

@@ -6,7 +6,7 @@ import { Database, Server } from "./AppSidebar";
 import { useMemo, useState } from "react";
 import { format } from "sql-formatter";
 import { Button } from "@/components/ui/button";
-import { ChartNoAxesGanttIcon, PlayIcon } from "lucide-react";
+import { ChartNoAxesGanttIcon, PlayIcon, SaveIcon } from "lucide-react";
 import {
   ColumnDef,
   flexRender,
@@ -30,6 +30,7 @@ interface CodeBlockProps {
   className?: string;
   server: Server;
   database: Database | null;
+  onSaveAsFile: (sqlCode: string) => void;
 }
 
 interface QueryResult {
@@ -46,6 +47,7 @@ export function CodeBlock({
   className,
   server,
   database,
+  onSaveAsFile,
 }: CodeBlockProps) {
   const [selection, setSelection] = useState<string>("");
   const [result, setResult] = useState<QueryResult | null>(null);
@@ -155,6 +157,14 @@ export function CodeBlock({
           disabled={!selection}
         >
           <PlayIcon /> Execute
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onSaveAsFile(value)}
+          disabled={!value}
+        >
+          <SaveIcon /> Save as File
         </Button>
       </div>
       <CodeMirror

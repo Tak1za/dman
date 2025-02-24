@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { Database, Server } from "./AppSidebar";
-import { v4 as uuidv4 } from "uuid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusIcon, XIcon } from "lucide-react";
 import { Tab } from "@/App";
@@ -16,6 +14,7 @@ interface QueryPadProps {
   readonly tabs: Tab[];
   readonly onNewTab: (server: Server, database: Database | null) => void;
   readonly updateTabContent: (tabId: string, sqlCode: string) => void;
+  readonly onSaveAsFile: (tabId: string, sqlCode: string) => void;
 }
 
 export function QueryPad({
@@ -27,6 +26,7 @@ export function QueryPad({
   tabs,
   onNewTab,
   updateTabContent,
+  onSaveAsFile,
 }: QueryPadProps) {
   return (
     <div className="flex-1 p-4 pt-0 flex flex-col">
@@ -69,6 +69,7 @@ export function QueryPad({
                 onChange={(sqlCode) => updateTabContent(tab.id, sqlCode)}
                 server={selectedServer}
                 database={selectedDatabase}
+                onSaveAsFile={(code) => onSaveAsFile(tab.id, code)}
               />
             </TabsContent>
           ))}

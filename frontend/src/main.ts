@@ -1,6 +1,20 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import path, { dirname, join } from "path";
+import * as fs from "fs";
+
+interface ElectronAPI {
+  getTempDir: () => Promise<{ tempDir: string; tabsIndexFile: string }>;
+  writeToFile: (path: string, tabId: string, content: string) => string;
+  readFile: (path: string) => string;
+  unlinkSync: (path: string) => Promise<void>;
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
+}
 
 // ESM equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -12,8 +26,9 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
@@ -26,6 +41,38 @@ function createWindow() {
     win.loadFile(filePath);
   }
 }
+
+// Define temp directory in app directory
+const TEMP_DIR = path.join(app.getAppPath(), "temp");
+const TABS_INDEX_FILE = path.join(TEMP_DIR, "dman-tabs.json");
+
+// Ensure temp directory exists
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR);
+}
+
+if (!fs.existsSync(TABS_INDEX_FILE)) {
+  fs.writeFileSync(TABS_INDEX_FILE, "", "utf-8");
+}
+
+// IPC handler to send temp directory path
+ipcMain.handle("get-temp-dir", () => {
+  return { tempDir: TEMP_DIR, tabsIndexFile: TABS_INDEX_FILE };
+});
+
+ipcMain.handle("write-to-file", async (_, ...args) => {
+  const filePath = args[0] || path.join(TEMP_DIR, `dman-tab-${args[1]}.sql`);
+  fs.writeFileSync(filePath, args[2], "utf-8");
+  return filePath;
+});
+
+ipcMain.handle("read-file", async (_, ...args) => {
+  return fs.readFileSync(args[0], "utf-8");
+});
+
+ipcMain.handle("unlink-sync", async (_, ...args) => {
+  return fs.unlinkSync(args[0]);
+});
 
 app.whenReady().then(() => {
   createWindow();
