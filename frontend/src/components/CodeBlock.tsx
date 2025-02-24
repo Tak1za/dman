@@ -34,6 +34,7 @@ interface CodeBlockProps {
 interface QueryResult {
   columns: string[];
   rows: any[][];
+  affectedRows: number;
   error?: string;
 }
 
@@ -92,6 +93,7 @@ export function CodeBlock({
       setResult({
         columns: [],
         rows: [],
+        affectedRows: 0,
         error: error.message,
       });
     }
@@ -179,7 +181,7 @@ export function CodeBlock({
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{result.error}</AlertDescription>
             </Alert>
-          ) : (
+          ) : result.columns && result.rows ? (
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -212,6 +214,10 @@ export function CodeBlock({
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <div className="text-gray-400 p-4">
+              Query executed successfully. Affected rows: {result.affectedRows}
+            </div>
           )
         ) : (
           <div className="text-gray-400 p-4">

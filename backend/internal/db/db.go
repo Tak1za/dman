@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -19,11 +20,18 @@ type Schema struct {
 	Name string `json:"name"`
 }
 
+type QueryResult struct {
+	Columns      []string        `json:"columns"`
+	Rows         [][]interface{} `json:"rows"`
+	AffectedRows int             `json:"affectedRows"`
+	Error        string          `json:"error,omitempty"`
+}
+
 // DB interface for mocking in tests
 type DB interface {
 	ListDatabases(ctx context.Context) ([]Database, error)
 	ListSchemas(ctx context.Context) ([]Schema, error)
-	ExecuteQuery(ctx context.Context, query string) ([]string, [][]interface{}, string)
+	ExecuteQuery(ctx context.Context, query string) (*QueryResult, error)
 }
 
 // PgxDB implements DB using pgx
@@ -108,27 +116,64 @@ func (db *PgxDB) ListSchemas(ctx context.Context) ([]Schema, error) {
 	return schemas, nil
 }
 
-func (db *PgxDB) ExecuteQuery(ctx context.Context, query string) ([]string, [][]interface{}, string) {
-	rows, err := db.conn.Query(ctx, query)
+func (db *PgxDB) ExecuteQuery(ctx context.Context, query string) (*QueryResult, error) {
+	tx, err := db.conn.Begin(ctx)
 	if err != nil {
-		return nil, nil, err.Error()
+		return nil, err
 	}
-	defer rows.Close()
+	defer tx.Rollback(ctx)
 
-	columns := rows.FieldDescriptions()
-	columnNames := make([]string, len(columns))
-	for i, col := range columns {
-		columnNames[i] = string(col.Name)
-	}
+	// Split statements
+	statements := strings.Split(query, ";")
+	totalAffectedRows := 0
+	lastSelectResult := &QueryResult{}
 
-	var resultRows [][]interface{}
-	for rows.Next() {
-		values, err := rows.Values()
-		if err != nil {
-			return nil, nil, err.Error()
+	for _, stmt := range statements {
+		stmt = strings.TrimSpace(stmt)
+		if stmt == "" {
+			continue
 		}
-		resultRows = append(resultRows, values)
+
+		isSelect := strings.HasPrefix(strings.ToUpper(stmt), "SELECT") || strings.HasPrefix(strings.ToUpper(stmt), "WITH")
+
+		if isSelect {
+			rows, err := tx.Query(ctx, stmt)
+			if err != nil {
+				return nil, err
+			}
+			defer rows.Close()
+
+			columns := rows.FieldDescriptions()
+			columnNames := make([]string, len(columns))
+			for i, col := range columns {
+				columnNames[i] = string(col.Name)
+			}
+
+			var resultRows [][]interface{}
+			for rows.Next() {
+				values, err := rows.Values()
+				if err != nil {
+					return nil, err
+				}
+				resultRows = append(resultRows, values)
+			}
+
+			lastSelectResult.Columns = columnNames
+			lastSelectResult.Rows = resultRows
+			lastSelectResult.AffectedRows = totalAffectedRows
+		} else {
+			commandTag, err := tx.Exec(ctx, stmt)
+			if err != nil {
+				return nil, err
+			}
+			lastSelectResult.AffectedRows += int(commandTag.RowsAffected())
+		}
 	}
 
-	return columnNames, resultRows, ""
+	if err := tx.Commit(ctx); err != nil {
+		lastSelectResult.Error = err.Error()
+		return nil, err
+	}
+
+	return lastSelectResult, nil
 }

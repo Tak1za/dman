@@ -19,9 +19,10 @@ type QueryRequest struct {
 }
 
 type QueryResult struct {
-	Columns []string        `json:"columns"`
-	Rows    [][]interface{} `json:"rows"`
-	Error   string          `json:"error,omitempty"`
+	Columns      []string        `json:"columns"`
+	Rows         [][]interface{} `json:"rows"`
+	AffectedRows int             `json:"affectedRows"`
+	Error        string          `json:"error,omitempty"`
 }
 
 // Handler for CORS
@@ -141,15 +142,14 @@ func (h *Handler) ExecuteQueryHandler() http.HandlerFunc {
 			return
 		}
 
-		var res QueryResult
-
+		result := &QueryResult{}
 		ctx := context.Background()
-		columns, rows, err := h.db.ExecuteQuery(ctx, req.Query)
-		if err != "" {
-			res.Error = err
-		} else {
-			res.Columns = columns
-			res.Rows = rows
+		res, err := h.db.ExecuteQuery(ctx, req.Query)
+		if err != nil {
+			result.Error = err.Error()
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(result)
+			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
