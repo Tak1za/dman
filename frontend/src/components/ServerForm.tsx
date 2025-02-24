@@ -44,7 +44,9 @@ export function ServerForm({ onSubmit, onCancel }: ServerFormProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1 text-sm text-gray-300">Name</label>
+            <label className="block mb-1 text-sm text-muted-foreground">
+              Name
+            </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -52,7 +54,9 @@ export function ServerForm({ onSubmit, onCancel }: ServerFormProps) {
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm text-gray-300">Host</label>
+            <label className="block mb-1 text-sm text-muted-foreground">
+              Host
+            </label>
             <Input
               value={host}
               onChange={(e) => setHost(e.target.value)}
@@ -60,7 +64,9 @@ export function ServerForm({ onSubmit, onCancel }: ServerFormProps) {
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm text-gray-300">Port</label>
+            <label className="block mb-1 text-sm text-muted-foreground">
+              Port
+            </label>
             <Input
               value={port}
               onChange={(e) => setPort(e.target.value)}
@@ -68,7 +74,9 @@ export function ServerForm({ onSubmit, onCancel }: ServerFormProps) {
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm text-gray-300">User</label>
+            <label className="block mb-1 text-sm text-muted-foreground">
+              User
+            </label>
             <Input
               value={user}
               onChange={(e) => setUser(e.target.value)}
@@ -76,7 +84,9 @@ export function ServerForm({ onSubmit, onCancel }: ServerFormProps) {
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm text-gray-300">Password</label>
+            <label className="block mb-1 text-sm text-muted-foreground">
+              Password
+            </label>
             <Input
               type="password"
               value={password}
@@ -85,7 +95,9 @@ export function ServerForm({ onSubmit, onCancel }: ServerFormProps) {
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm text-gray-300">Database</label>
+            <label className="block mb-1 text-sm text-muted-foreground">
+              Database
+            </label>
             <Input
               value={database}
               onChange={(e) => setDatabase(e.target.value)}

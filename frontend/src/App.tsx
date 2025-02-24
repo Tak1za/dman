@@ -63,7 +63,7 @@ function App() {
     });
   };
 
-  const addNewTab = () => {
+  const addNewTab = (server: Server, database: Database | null) => {
     if (!showQueryPad) {
       setShowQueryPad(true);
     } else {
@@ -78,6 +78,8 @@ function App() {
       ]);
       setActiveTab(newTabId);
     }
+    setSelectedServer(server);
+    setSelectedDatabase(database);
   };
 
   const updateTabContent = (tabId: string, sqlCode: string) => {

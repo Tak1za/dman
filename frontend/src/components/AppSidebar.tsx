@@ -32,7 +32,7 @@ interface AppSidebarProps {
   onAddServer: (conn: Server) => void;
   selectedDatabase: Database | null;
   onSelectDatabase: (db: Database) => void;
-  addNewTab: () => void;
+  addNewTab: (server: Server, database: Database | null) => void;
 }
 
 const data = {

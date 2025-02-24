@@ -43,7 +43,7 @@ interface NavDatabasesProps {
   readonly selectedServer: Server;
   readonly selectedDatabase: Database | null;
   readonly onSelectDatabase: (db: Database) => void;
-  readonly addNewTab: () => void;
+  readonly addNewTab: (server: Server, database: Database | null) => void;
 }
 
 export function NavDatabases({
@@ -162,7 +162,9 @@ export function NavDatabases({
                     </SidebarMenuAction>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="right" align="start">
-                    <DropdownMenuItem onClick={addNewTab}>
+                    <DropdownMenuItem
+                      onClick={() => addNewTab(selectedServer, database)}
+                    >
                       <span>Query Pad</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>

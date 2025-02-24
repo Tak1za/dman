@@ -2,7 +2,9 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -21,10 +23,11 @@ type Schema struct {
 }
 
 type QueryResult struct {
-	Columns      []string        `json:"columns"`
-	Rows         [][]interface{} `json:"rows"`
-	AffectedRows int             `json:"affectedRows"`
-	Error        string          `json:"error,omitempty"`
+	Columns       []string        `json:"columns"`
+	Rows          [][]interface{} `json:"rows"`
+	AffectedRows  int             `json:"affectedRows"`
+	Error         string          `json:"error,omitempty"`
+	ExecutionTime float64         `json:"executionTime"`
 }
 
 // DB interface for mocking in tests
@@ -125,13 +128,32 @@ func (db *PgxDB) ExecuteQuery(ctx context.Context, query string) (*QueryResult, 
 
 	// Split statements
 	statements := strings.Split(query, ";")
-	totalAffectedRows := 0
 	lastSelectResult := &QueryResult{}
 
 	for _, stmt := range statements {
+		var totalExecutionTime float64
+		var totalRows int
 		stmt = strings.TrimSpace(stmt)
 		if stmt == "" {
 			continue
+		}
+
+		// Get execution time with EXPLAIN ANALYZE
+		explainStmt := "EXPLAIN (ANALYZE, FORMAT JSON) " + stmt
+		var explainResult []byte
+		err := tx.QueryRow(ctx, explainStmt).Scan(&explainResult)
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse EXPLAIN ANALYZE JSON
+		var explainData []struct {
+			ExecutionTime float64 `json:"Execution Time"`
+		}
+		if err := json.Unmarshal(explainResult, &explainData); err != nil {
+			log.Printf("Failed to parse EXPLAIN JSON: %v", err)
+		} else if len(explainData) > 0 {
+			totalExecutionTime = explainData[0].ExecutionTime
 		}
 
 		isSelect := strings.HasPrefix(strings.ToUpper(stmt), "SELECT") || strings.HasPrefix(strings.ToUpper(stmt), "WITH")
@@ -156,17 +178,21 @@ func (db *PgxDB) ExecuteQuery(ctx context.Context, query string) (*QueryResult, 
 					return nil, err
 				}
 				resultRows = append(resultRows, values)
+				totalRows++
 			}
+			rows.Close()
 
 			lastSelectResult.Columns = columnNames
 			lastSelectResult.Rows = resultRows
-			lastSelectResult.AffectedRows = totalAffectedRows
+			lastSelectResult.AffectedRows = totalRows
+			lastSelectResult.ExecutionTime = totalExecutionTime
 		} else {
 			commandTag, err := tx.Exec(ctx, stmt)
 			if err != nil {
 				return nil, err
 			}
 			lastSelectResult.AffectedRows += int(commandTag.RowsAffected())
+			lastSelectResult.ExecutionTime = totalExecutionTime
 		}
 	}
 

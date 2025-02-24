@@ -1,9 +1,9 @@
-import CodeMirror, { EditorView, ViewUpdate } from "@uiw/react-codemirror";
+import CodeMirror, { ViewUpdate } from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { darcula } from "@uiw/codemirror-theme-darcula";
 import { cn } from "@/lib/utils";
 import { Database, Server } from "./AppSidebar";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { format } from "sql-formatter";
 import { Button } from "@/components/ui/button";
 import { ChartNoAxesGanttIcon, PlayIcon } from "lucide-react";
@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
 interface CodeBlockProps {
   value: string;
@@ -35,6 +36,7 @@ interface QueryResult {
   columns: string[];
   rows: any[][];
   affectedRows: number;
+  executionTime: number;
   error?: string;
 }
 
@@ -94,6 +96,7 @@ export function CodeBlock({
         columns: [],
         rows: [],
         affectedRows: 0,
+        executionTime: 0,
         error: error.message,
       });
     }
@@ -181,46 +184,59 @@ export function CodeBlock({
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{result.error}</AlertDescription>
             </Alert>
-          ) : result.columns && result.rows ? (
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          ) : result.columns ? (
+            <div className="text-muted-foreground">
+              Query executed successfully
+              <div className="text-muted-foreground mb-2 h-5 flex flex-row gap-2">
+                <div>Execution time: {result.executionTime.toFixed(4)} ms</div>
+                <Separator orientation="vertical" />
+                <div>Total rows: {result.affectedRows}</div>
+              </div>
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="text-gray-400 p-4">
-              Query executed successfully. Affected rows: {result.affectedRows}
+            <div className="text-muted-foreground">
+              Query executed successfully
+              <div className="text-muted-foreground mb-2 h-5 flex flex-row gap-2">
+                <div>Execution time: {result.executionTime.toFixed(4)} ms</div>
+                <Separator orientation="vertical" />
+                <div>Affected rows: {result.affectedRows}</div>
+              </div>
             </div>
           )
         ) : (
-          <div className="text-gray-400 p-4">
+          <div className="text-muted-foreground p-4">
             Run a query to see results here.
           </div>
         )}

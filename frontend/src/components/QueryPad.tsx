@@ -14,7 +14,7 @@ interface QueryPadProps {
   readonly activeTab: string | null;
   readonly setActiveTab: (tabId: string) => void;
   readonly tabs: Tab[];
-  readonly onNewTab: () => void;
+  readonly onNewTab: (server: Server, database: Database | null) => void;
   readonly updateTabContent: (tabId: string, sqlCode: string) => void;
 }
 
@@ -38,7 +38,10 @@ export function QueryPad({
           className="flex flex-col h-full"
         >
           <div className="flex flex-row gap-2 items-center">
-            <Button size="icon" onClick={onNewTab}>
+            <Button
+              size="icon"
+              onClick={() => onNewTab(selectedServer, selectedDatabase)}
+            >
               <PlusIcon />
             </Button>
             <TabsList>
@@ -71,7 +74,7 @@ export function QueryPad({
           ))}
         </Tabs>
       ) : (
-        <div className="text-gray-400">
+        <div className="text-muted-foreground">
           No tabs open. Select a connection or add a new tab.
         </div>
       )}

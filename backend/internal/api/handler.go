@@ -19,10 +19,11 @@ type QueryRequest struct {
 }
 
 type QueryResult struct {
-	Columns      []string        `json:"columns"`
-	Rows         [][]interface{} `json:"rows"`
-	AffectedRows int             `json:"affectedRows"`
-	Error        string          `json:"error,omitempty"`
+	Columns       []string        `json:"columns"`
+	Rows          [][]interface{} `json:"rows"`
+	AffectedRows  int             `json:"affectedRows"`
+	Error         string          `json:"error,omitempty"`
+	ExecutionTime float64         `json:"executionTime"`
 }
 
 // Handler for CORS
@@ -142,9 +143,16 @@ func (h *Handler) ExecuteQueryHandler() http.HandlerFunc {
 			return
 		}
 
+		dbConn, err := db.NewPgxDB(req.ConnectionString)
+		if err != nil {
+			http.Error(w, "Failed to connect to database: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dbConn.Close(context.Background())
+
 		result := &QueryResult{}
 		ctx := context.Background()
-		res, err := h.db.ExecuteQuery(ctx, req.Query)
+		res, err := dbConn.ExecuteQuery(ctx, req.Query)
 		if err != nil {
 			result.Error = err.Error()
 			w.Header().Set("Content-Type", "application/json")
