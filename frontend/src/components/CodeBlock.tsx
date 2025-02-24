@@ -175,7 +175,7 @@ export function CodeBlock({
       <div className="scrollbar flex-1 overflow-auto rounded-b-md w-full">
         {result ? (
           result.error ? (
-            <Alert variant="destructive">
+            <Alert>
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{result.error}</AlertDescription>
             </Alert>

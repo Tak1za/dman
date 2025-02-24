@@ -115,9 +115,12 @@ body {
 .cm-editor {
   padding: 1px;
   height: 100%;
+  border-radius: 10px;
 }
 
 .cm-gutters {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
 }
 
 .cm-scroller::-webkit-scrollbar {
