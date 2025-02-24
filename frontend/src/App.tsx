@@ -25,22 +25,18 @@ export interface Tab {
 }
 
 function App() {
-  const [servers, setServers] = useState<Server[]>(() => {
-    const saved = localStorage.getItem("servers");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          {
-            id: "1",
-            host: "localhost",
-            database: "postgres",
-            name: "PostgreSQL",
-            port: "5432",
-            user: "postgres",
-            password: "password",
-          },
-        ];
-  });
+  const [servers, setServers] = useState<Server[]>([
+    {
+      id: "1",
+      host: "localhost",
+      database: "postgres",
+      name: "PostgreSQL",
+      port: "5432",
+      user: "postgres",
+      password: "password",
+    },
+  ]);
+  const [serversFile, setServersFile] = useState<string>("");
   const [selectedServer, setSelectedServer] = useState<Server>(servers[0]);
   const [selectedDatabase, setSelectedDatabase] = useState<Database | null>(
     null
@@ -54,16 +50,18 @@ function App() {
   const [tempDir, setTempDir] = useState<string>("");
   const [tabsIndexFile, setTabsIndexFile] = useState<string>("");
 
-  useEffect(() => {
-    localStorage.setItem("servers", JSON.stringify(servers));
-  }, [servers]);
-
   // Fetch temp directory and load tabs on mount
   useEffect(() => {
     window.electronAPI.getTempDir().then(async ({ tempDir, tabsIndexFile }) => {
       setTempDir(tempDir);
       setTabsIndexFile(tabsIndexFile);
+      const serversFilePath = `${tempDir}/servers.json`;
+      setServersFile(serversFilePath);
       try {
+        const serversData = await window.electronAPI.readFile(serversFilePath);
+        const savedServers: Server[] = JSON.parse(serversData);
+        setServers(savedServers);
+        setSelectedServer(savedServers[0]);
         const indexData = await window.electronAPI.readFile(tabsIndexFile);
         const savedTabs: Tab[] = JSON.parse(indexData);
         const allTabsData = await Promise.all(
@@ -113,6 +111,20 @@ function App() {
 
     doStuff();
   }, [tabs, activeTab, tempDir, tabsIndexFile]);
+
+  // Save servers to temp file when they change
+  useEffect(() => {
+    const saveServers = async () => {
+      if (!serversFile) return;
+      await window.electronAPI.writeToFile(
+        serversFile,
+        "",
+        JSON.stringify(servers)
+      );
+    };
+
+    saveServers();
+  }, [servers, serversFile]);
 
   const closeTab = (tabId: string) => {
     setTabs((prev) => {
