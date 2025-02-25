@@ -138,27 +138,27 @@ func (db *PgxDB) ExecuteQuery(ctx context.Context, query string) (*QueryResult, 
 			continue
 		}
 
-		// Get execution time with EXPLAIN ANALYZE
-		explainStmt := "EXPLAIN (ANALYZE, FORMAT JSON) " + stmt
-		var explainResult []byte
-		err := tx.QueryRow(ctx, explainStmt).Scan(&explainResult)
-		if err != nil {
-			return nil, err
-		}
-
-		// Parse EXPLAIN ANALYZE JSON
-		var explainData []struct {
-			ExecutionTime float64 `json:"Execution Time"`
-		}
-		if err := json.Unmarshal(explainResult, &explainData); err != nil {
-			log.Printf("Failed to parse EXPLAIN JSON: %v", err)
-		} else if len(explainData) > 0 {
-			totalExecutionTime = explainData[0].ExecutionTime
-		}
-
 		isSelect := strings.HasPrefix(strings.ToUpper(stmt), "SELECT") || strings.HasPrefix(strings.ToUpper(stmt), "WITH")
 
 		if isSelect {
+			// Get execution time with EXPLAIN ANALYZE
+			explainStmt := "EXPLAIN (ANALYZE, FORMAT JSON) " + stmt
+			var explainResult []byte
+			err := tx.QueryRow(ctx, explainStmt).Scan(&explainResult)
+			if err != nil {
+				return nil, err
+			}
+
+			// Parse EXPLAIN ANALYZE JSON
+			var explainData []struct {
+				ExecutionTime float64 `json:"Execution Time"`
+			}
+			if err := json.Unmarshal(explainResult, &explainData); err != nil {
+				log.Printf("Failed to parse EXPLAIN JSON: %v", err)
+			} else if len(explainData) > 0 {
+				totalExecutionTime = explainData[0].ExecutionTime
+			}
+
 			rows, err := tx.Query(ctx, stmt)
 			if err != nil {
 				return nil, err
