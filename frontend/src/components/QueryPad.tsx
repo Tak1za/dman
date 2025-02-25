@@ -7,12 +7,12 @@ import { CodeBlock } from "./CodeBlock";
 
 interface QueryPadProps {
   readonly selectedServer: Server;
-  readonly selectedDatabase: Database | null;
+  readonly selectedDatabase: string;
   readonly onCloseTab: (tabId: string) => void;
   readonly activeTab: string | null;
   readonly setActiveTab: (tabId: string) => void;
   readonly tabs: Tab[];
-  readonly onNewTab: (server: Server, database: Database | null) => void;
+  readonly onNewTab: (server: Server, databaseName: string) => void;
   readonly updateTabContent: (tabId: string, sqlCode: string) => void;
   readonly onSaveAsFile: (tabId: string, sqlCode: string) => void;
 }
@@ -68,7 +68,7 @@ export function QueryPad({
                 value={tab.content}
                 onChange={(sqlCode) => updateTabContent(tab.id, sqlCode)}
                 server={selectedServer}
-                database={selectedDatabase}
+                databaseName={selectedDatabase}
                 onSaveAsFile={(code) => onSaveAsFile(tab.id, code)}
               />
             </TabsContent>

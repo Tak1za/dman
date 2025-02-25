@@ -8,6 +8,7 @@ interface ElectronAPI {
   writeToFile: (path: string, tabId: string, content: string) => string;
   readFile: (path: string) => string;
   unlinkSync: (path: string) => Promise<void>;
+  getServersPath: () => string;
 }
 
 declare global {
@@ -43,12 +44,12 @@ function createWindow() {
 }
 
 // Define temp directory in app directory
-const TEMP_DIR = path.join(app.getAppPath(), "temp");
-const TABS_INDEX_FILE = path.join(TEMP_DIR, "dman-tabs.json");
+const DATA_DIR = path.join(app.getAppPath(), "data");
+const TABS_INDEX_FILE = path.join(DATA_DIR, "dman-tabs.json");
 
 // Ensure temp directory exists
-if (!fs.existsSync(TEMP_DIR)) {
-  fs.mkdirSync(TEMP_DIR);
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR);
 }
 
 if (!fs.existsSync(TABS_INDEX_FILE)) {
@@ -57,11 +58,11 @@ if (!fs.existsSync(TABS_INDEX_FILE)) {
 
 // IPC handler to send temp directory path
 ipcMain.handle("get-temp-dir", () => {
-  return { tempDir: TEMP_DIR, tabsIndexFile: TABS_INDEX_FILE };
+  return { tempDir: DATA_DIR, tabsIndexFile: TABS_INDEX_FILE };
 });
 
 ipcMain.handle("write-to-file", async (_, ...args) => {
-  const filePath = args[0] || path.join(TEMP_DIR, `dman-tab-${args[1]}.sql`);
+  const filePath = args[0] || path.join(DATA_DIR, `dman-tab-${args[1]}.sql`);
   fs.writeFileSync(filePath, args[2], "utf-8");
   return filePath;
 });
@@ -72,6 +73,10 @@ ipcMain.handle("read-file", async (_, ...args) => {
 
 ipcMain.handle("unlink-sync", async (_, ...args) => {
   return fs.unlinkSync(args[0]);
+});
+
+ipcMain.handle("get-servers-path", async () => {
+  return path.join(DATA_DIR, "servers.json");
 });
 
 app.whenReady().then(() => {

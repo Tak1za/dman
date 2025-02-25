@@ -29,7 +29,7 @@ interface CodeBlockProps {
   onChange: (value: string) => void;
   className?: string;
   server: Server;
-  database: Database | null;
+  databaseName: string;
   onSaveAsFile: (sqlCode: string) => void;
 }
 
@@ -46,7 +46,7 @@ export function CodeBlock({
   onChange,
   className,
   server,
-  database,
+  databaseName,
   onSaveAsFile,
 }: CodeBlockProps) {
   const [selection, setSelection] = useState<string>("");
@@ -75,13 +75,11 @@ export function CodeBlock({
   };
 
   const executeQuery = async () => {
-    if (!server && !database) return;
+    if (!server && !databaseName) return;
     const queryToExecute = selection;
     if (!queryToExecute) return;
 
-    const connStr = `postgres://${server.user}:${server.password}@${
-      server.host
-    }:${server.port}/${database!.name}`;
+    const connStr = `postgres://${server.user}:${server.password}@${server.host}:${server.port}/${databaseName}`;
     try {
       const response = await fetch("http://localhost:8080/execute", {
         method: "POST",
@@ -246,7 +244,7 @@ export function CodeBlock({
             </div>
           )
         ) : (
-          <div className="text-muted-foreground p-4">
+          <div className="text-muted-foreground">
             Run a query to see results here.
           </div>
         )}

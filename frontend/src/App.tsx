@@ -5,7 +5,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar, Server, Database } from "@/components/AppSidebar";
+import { AppSidebar, Server } from "@/components/AppSidebar";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -22,6 +22,8 @@ export interface Tab {
   title: string;
   content: string;
   filePath: string;
+  serverId: string;
+  databaseName: string;
 }
 
 function App() {
@@ -38,9 +40,7 @@ function App() {
   ]);
   const [serversFile, setServersFile] = useState<string>("");
   const [selectedServer, setSelectedServer] = useState<Server>(servers[0]);
-  const [selectedDatabase, setSelectedDatabase] = useState<Database | null>(
-    null
-  );
+  const [selectedDatabase, setSelectedDatabase] = useState<string>("");
   const [tabs, setTabs] = useState<Tab[]>(() => {
     // Initial load will be handled in useEffect due to async IPC
     return [];
@@ -55,7 +55,7 @@ function App() {
     window.electronAPI.getTempDir().then(async ({ tempDir, tabsIndexFile }) => {
       setTempDir(tempDir);
       setTabsIndexFile(tabsIndexFile);
-      const serversFilePath = `${tempDir}/servers.json`;
+      const serversFilePath = await window.electronAPI.getServersPath();
       setServersFile(serversFilePath);
       try {
         const serversData = await window.electronAPI.readFile(serversFilePath);
@@ -75,8 +75,13 @@ function App() {
         });
         setTabs(loadedTabs);
         if (loadedTabs.length > 0) {
+          const toLoadTab = loadedTabs[loadedTabs.length - 1];
           setShowQueryPad(true);
-          setActiveTab(loadedTabs[loadedTabs.length - 1].id);
+          setActiveTab(toLoadTab.id);
+          setSelectedServer(
+            servers.find((server) => server.id === toLoadTab.serverId)!
+          );
+          setSelectedDatabase(toLoadTab.databaseName);
         }
       } catch (err) {
         setTabs([]);
@@ -84,10 +89,22 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    if (activeTab) {
+      const tabToLoad = tabs.find((tab) => tab.id === activeTab);
+      if (tabToLoad) {
+        setSelectedServer(
+          servers.find((server) => server.id === tabToLoad.serverId)!
+        );
+        setSelectedDatabase(tabToLoad.databaseName);
+      }
+    }
+  }, [activeTab]);
+
   // Save tabs to temp files and index when tempDir is set
   useEffect(() => {
     const doStuff = async () => {
-      if (!tempDir || !tabsIndexFile) return; // Wait for tempDir to be set
+      if (!tempDir || !tabsIndexFile || tabs.length === 0) return; // Wait for tempDir to be set
       const allFilePaths = await Promise.all(
         tabs.map((tab) =>
           window.electronAPI.writeToFile(tab.filePath, tab.id, tab.content)
@@ -146,19 +163,22 @@ function App() {
     });
   };
 
-  const addNewTab = (server: Server, database: Database | null) => {
+  const addNewTab = (server: Server, databaseName: string) => {
     const newTabId = `tab-${Date.now()}`;
-    const newTab = {
+    const tabCount = tabs.length;
+    const newTab: Tab = {
       id: newTabId,
-      title: "New Tab",
+      title: `New Tab ${tabCount + 1}`,
       content: "",
       filePath: "",
+      serverId: server.id,
+      databaseName: databaseName,
     };
     setShowQueryPad(true);
     setTabs((prev) => [...prev, newTab]);
     setActiveTab(newTabId);
     setSelectedServer(server);
-    setSelectedDatabase(database);
+    setSelectedDatabase(databaseName);
   };
 
   const updateTabContent = (tabId: string, sqlCode: string) => {
@@ -213,9 +233,7 @@ function App() {
                       <>
                         <BreadcrumbSeparator className="hidden md:block" />
                         <BreadcrumbItem>
-                          <BreadcrumbPage>
-                            {selectedDatabase.name}
-                          </BreadcrumbPage>
+                          <BreadcrumbPage>{selectedDatabase}</BreadcrumbPage>
                         </BreadcrumbItem>
                       </>
                     ) : undefined}

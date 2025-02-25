@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("write-to-file", path, tabId, content),
   readFile: (path: string) => ipcRenderer.invoke("read-file", path),
   unlinkSync: (path: string) => ipcRenderer.invoke("unlink-sync", path),
+  getServersPath: () => ipcRenderer.invoke("get-servers-path"),
 });

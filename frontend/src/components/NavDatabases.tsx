@@ -41,9 +41,9 @@ interface Schema {
 interface NavDatabasesProps {
   readonly databases: Database[];
   readonly selectedServer: Server;
-  readonly selectedDatabase: Database | null;
-  readonly onSelectDatabase: (db: Database) => void;
-  readonly addNewTab: (server: Server, database: Database | null) => void;
+  readonly selectedDatabase: string;
+  readonly onSelectDatabase: (db: string) => void;
+  readonly addNewTab: (server: Server, databaseName: string) => void;
 }
 
 export function NavDatabases({
@@ -93,7 +93,7 @@ export function NavDatabases({
     <SidebarGroup>
       <SidebarGroupLabel>Databases</SidebarGroupLabel>
       <SidebarMenu>
-        {databases.map((database, i) => (
+        {databases.map((database) => (
           <Collapsible
             key={database.name}
             asChild
@@ -107,11 +107,11 @@ export function NavDatabases({
               <>
                 <CollapsibleTrigger
                   asChild
-                  onClick={() => onSelectDatabase(database)}
+                  onClick={() => onSelectDatabase(database.name)}
                 >
                   <SidebarMenuButton
                     tooltip={database.name}
-                    isActive={selectedDatabase?.name === database.name}
+                    isActive={selectedDatabase === database.name}
                   >
                     <DatabaseIcon />
                     <span>{database.name}</span>
@@ -163,7 +163,7 @@ export function NavDatabases({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="right" align="start">
                     <DropdownMenuItem
-                      onClick={() => addNewTab(selectedServer, database)}
+                      onClick={() => addNewTab(selectedServer, database.name)}
                     >
                       <span>Query Pad</span>
                     </DropdownMenuItem>
