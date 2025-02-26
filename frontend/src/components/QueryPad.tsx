@@ -62,7 +62,7 @@ export function QueryPad({
             <TabsContent
               key={tab.id}
               value={tab.id}
-              className="flex-1 mt-4 overflow-hidden"
+              className="flex-1 mt-2 overflow-hidden"
             >
               <CodeBlock
                 value={tab.content}

@@ -144,7 +144,7 @@ export function CodeBlock({
 
   return (
     <div className={cn("flex flex-col h-full gap-2", className)}>
-      <div className="flex items-center gap-2 p-2 bg-popover rounded-tl-md rounded-tr-md">
+      <div className="flex items-center bg-muted gap-2 p-2 rounded-md">
         <Button variant="secondary" size="sm" onClick={formatSql}>
           <ChartNoAxesGanttIcon /> Format
         </Button>

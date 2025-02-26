@@ -204,6 +204,17 @@ function App() {
     setServers((prev) => [...prev, conn]);
   };
 
+  const currentTabbedServer =
+    servers.find(
+      (s) => s.id === tabs.find((t) => t.id === activeTab)?.serverId
+    ) ?? servers[0];
+
+  const currentTabbedServerName = currentTabbedServer?.name;
+
+  const currentTabbedDatabase = tabs.find(
+    (t) => t.id === activeTab
+  )?.databaseName;
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <div className="flex min-h-screen overflow-hidden">
@@ -226,21 +237,15 @@ function App() {
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
                       <BreadcrumbLink href="#">
-                        {
-                          servers.find(
-                            (s) =>
-                              s.id ===
-                              tabs.find((t) => t.id === activeTab)?.serverId
-                          )?.name
-                        }
+                        {currentTabbedServerName}
                       </BreadcrumbLink>
                     </BreadcrumbItem>
-                    {tabs.find((t) => t.id === activeTab)?.databaseName ? (
+                    {currentTabbedDatabase ? (
                       <>
                         <BreadcrumbSeparator className="hidden md:block" />
                         <BreadcrumbItem>
                           <BreadcrumbPage>
-                            {tabs.find((t) => t.id === activeTab)?.databaseName}
+                            {currentTabbedDatabase}
                           </BreadcrumbPage>
                         </BreadcrumbItem>
                       </>
@@ -251,15 +256,8 @@ function App() {
             </header>
             {showQueryPad && (
               <QueryPad
-                selectedDatabase={
-                  tabs.find((t) => t.id === activeTab)!.databaseName
-                }
-                selectedServer={
-                  servers.find(
-                    (s) =>
-                      s.id === tabs.find((t) => t.id === activeTab)!.serverId
-                  )!
-                }
+                selectedDatabase={currentTabbedDatabase ?? ""}
+                selectedServer={currentTabbedServer}
                 onCloseTab={closeTab}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
