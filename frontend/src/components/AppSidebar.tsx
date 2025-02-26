@@ -1,11 +1,9 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { NavDatabases } from "./NavDatabases";
-import { NavUser } from "./NavUser";
 import { ServerSwitcher } from "./ServerSwitcher";
 import { useEffect, useState } from "react";
 
@@ -90,9 +88,6 @@ export function AppSidebar({
           addNewTab={addNewTab}
         />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
     </Sidebar>
   );
 }
