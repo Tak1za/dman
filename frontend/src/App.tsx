@@ -226,14 +226,22 @@ function App() {
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
                       <BreadcrumbLink href="#">
-                        {selectedServer.name}
+                        {
+                          servers.find(
+                            (s) =>
+                              s.id ===
+                              tabs.find((t) => t.id === activeTab)?.serverId
+                          )?.name
+                        }
                       </BreadcrumbLink>
                     </BreadcrumbItem>
-                    {selectedDatabase ? (
+                    {tabs.find((t) => t.id === activeTab)?.databaseName ? (
                       <>
                         <BreadcrumbSeparator className="hidden md:block" />
                         <BreadcrumbItem>
-                          <BreadcrumbPage>{selectedDatabase}</BreadcrumbPage>
+                          <BreadcrumbPage>
+                            {tabs.find((t) => t.id === activeTab)?.databaseName}
+                          </BreadcrumbPage>
                         </BreadcrumbItem>
                       </>
                     ) : undefined}
@@ -243,8 +251,15 @@ function App() {
             </header>
             {showQueryPad && (
               <QueryPad
-                selectedDatabase={selectedDatabase}
-                selectedServer={selectedServer}
+                selectedDatabase={
+                  tabs.find((t) => t.id === activeTab)!.databaseName
+                }
+                selectedServer={
+                  servers.find(
+                    (s) =>
+                      s.id === tabs.find((t) => t.id === activeTab)!.serverId
+                  )!
+                }
                 onCloseTab={closeTab}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
